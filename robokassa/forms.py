@@ -38,6 +38,16 @@ class BaseRobokassaForm(forms.Form):
         raise NotImplementedError
 
 
+class CurrencyInput(forms.HiddenInput):
+    def render(self, name, value, attrs=None):
+        if value != '':
+            try:
+                value = u"%.2f" % value
+            except TypeError:
+                pass
+        return super(CurrencyInput, self).render(name, value, attrs)
+
+
 class RobokassaForm(BaseRobokassaForm):
 
     # login магазина в обменном пункте
@@ -78,7 +88,10 @@ class RobokassaForm(BaseRobokassaForm):
 
         # скрытый виджет по умолчанию
         for field in self.fields:
-            self.fields[field].widget = forms.HiddenInput()
+            if field == "OutSum":
+                self.fields[field].widget = CurrencyInput()
+            else:
+                self.fields[field].widget = forms.HiddenInput()
 
         self.fields['SignatureValue'].initial = self._get_signature()
 
@@ -107,7 +120,7 @@ class RobokassaForm(BaseRobokassaForm):
             if value is None:
                 return ''
             return unicode(value)
-        standard_part = ':'.join([_val('MrchLogin'), _val('OutSum'), _val('InvId'), PASSWORD1])
+        standard_part = ':'.join([_val('MrchLogin'), safe_sum(_val('OutSum')), _val('InvId'), PASSWORD1])
         return self._append_extra_part(standard_part, _val)
 
 
@@ -130,7 +143,7 @@ class ResultURLForm(BaseRobokassaForm):
 
     def _get_signature_string(self):
         _val = lambda name: unicode(self.cleaned_data[name])
-        standard_part = ':'.join([_val('OutSum'), _val('InvId'), PASSWORD2])
+        standard_part = ':'.join([safe_sum(_val('OutSum')), _val('InvId'), PASSWORD2])
         return self._append_extra_part(standard_part, _val)
 
 
@@ -141,7 +154,7 @@ class _RedirectPageForm(ResultURLForm):
 
     def _get_signature_string(self):
         _val = lambda name: unicode(self.cleaned_data[name])
-        standard_part = ':'.join([_val('OutSum'), _val('InvId'), PASSWORD1])
+        standard_part = ':'.join([safe_sum(_val('OutSum')), _val('InvId'), PASSWORD1])
         return self._append_extra_part(standard_part, _val)
 
 
@@ -163,4 +176,14 @@ class FailRedirectForm(BaseRobokassaForm):
     InvId = forms.IntegerField(min_value=0)
     Culture = forms.CharField(max_length=10)
 
-    
+
+def safe_sum(value):
+    """
+    Возвращает сумму заказа в формате адаптированном для робокассы
+    :param value:
+    :return:
+    """
+    if value:
+        return "%.2f" % float(value)
+    else:
+        return value
