@@ -32,8 +32,8 @@ def receive_result(request):
 
 
 @csrf_exempt
-def success(request, template_name='robokassa/success.html', extra_context=None,
-            error_template_name = 'robokassa/error.html'):
+def success(request, template_name='robokassa/success.jinja', extra_context=None,
+            error_template_name = 'robokassa/error.jinja'):
     """ обработчик для SuccessURL """
 
     data = request.POST if USE_POST else request.GET
@@ -55,8 +55,8 @@ def success(request, template_name='robokassa/success.html', extra_context=None,
 
 
 @csrf_exempt
-def fail(request, template_name='robokassa/fail.html', extra_context=None,
-         error_template_name = 'robokassa/error.html'):
+def fail(request, template_name='robokassa/fail.jinja', extra_context=None,
+         error_template_name = 'robokassa/error.jinja'):
     """ обработчик для FailURL """
 
     data = request.POST if USE_POST else request.GET
